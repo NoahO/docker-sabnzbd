@@ -1,0 +1,68 @@
+#!/usr/bin/with-contenv bash
+
+# make folders
+mkdir -p \
+	/nzbtomedia \
+	/incomplete-nzbs \
+	/downloads/Downloads \
+	/downloads/Downloads/tv \
+	/downloads/Downloads/movie
+
+# permissions (recursive)
+chown -R abc:abc \
+	/config/ \
+	/incomplete-nzbs \
+	/nzbtomedia
+
+chown abc:abc \
+	/downloads/Downloads \
+	/downloads/Downloads/tv \
+	/downloads/Downloads/movie
+
+# If config doesn't exist yet, start sabnzbd for 10 seconds to build config, then stop.
+if ! [ -f /config/sabnzbd.ini ]; then
+	#Start SAB
+	/etc/services.d/sabnzbd/run &
+	#Finish first run wizard
+	sleep 5
+	curl -d "host=default&username=default&password=default&ssl=1&port=563&connections=8&ssl_verify=2" -X POST http://172.18.0.1:8082/sabnzbd/wizard/two
+	#Shutdown SAB
+	sabAPI=$(cat /config/sabnzbd.ini | grep -m1 "api_key = ................................" | cut -d, -f2 | grep "api_key = ................................" | cut -d ' ' -f3)
+	curl -d "mode=shutdown&apikey=$sabAPI" -X POST http://172.18.0.1:8082/sabnzbd/api
+	sleep 5
+fi
+
+#Set postprocess settings
+sed -i '/[misc\]/,/^$/ s/script_dir = .*/script_dir = \/nzbtomedia/' /config/sabnzbd.ini
+sed -i '/[misc\]/,/^$/ s/empty_postproc = .*/empty_postproc = 1/' /config/sabnzbd.ini
+sed -i '/[misc\]/,/^$/ s/safe_postproc = .*/safe_postproc = 0/' /config/sabnzbd.ini
+sed -i '/[misc\]/,/^$/ s/direct_unpack = .*/direct_unpack = 1/' /config/sabnzbd.ini
+sed -i '/[misc\]/,/^$/ s/script_can_fail = .*/script_can_fail = 1/' /config/sabnzbd.ini
+sed -i '/[misc\]/,/^$/ s/pause_on_pwrar = .*/pause_on_pwrar = 2/' /config/sabnzbd.ini
+
+#Set directories
+sed -i '/[misc\]/,/^$/ s/complete_dir = .*/complete_dir = \/downloads\/Downloads/' /config/sabnzbd.ini
+sed -i '/[misc\]/,/^$/ s/download_dir = .*/download_dir = \/incomplete-nzbs/' /config/sabnzbd.ini
+
+#Set categories
+php /phpsed.php "/\[categories\].*?\[\[tv\]\].*?script =\K.*?$/sm" " nzbToSickBeard.py" /config/sabnzbd.ini
+php /phpsed.php "/\[categories\].*?\[\[tv\]\].*?dir =\K.*?$/sm" " tv" /config/sabnzbd.ini
+
+#Rename movies to movie to fit with nzbtomedia
+sed -i 's/\[\[movies\]\]/\[\[movie\]\]/' /config/sabnzbd.ini
+php /phpsed.php "/\[categories\].*?\[\[movie\]\].*?dir =\K.*?$/sm" " movie" /config/sabnzbd.ini
+php /phpsed.php "/\[categories\].*?\[\[movie\]\].*?script =\K.*?$/sm" " nzbToCouchPotato.py" /config/sabnzbd.ini
+php /phpsed.php "/\[categories\].*?\[\[movie\]\].*?name =\K.*?$/sm" " movie" /config/sabnzbd.ini
+
+while [ ! -f /nzbtomedia/autoProcessMedia.cfg ]; do
+	sleep 1
+	echo "Waiting for nzbtomedia volume to be ready"
+done
+sleep 6
+
+#NZBToMedia Settings
+# Add the sabnzbd api key
+sabAPI=$(cat /config/sabnzbd.ini | grep -m1 "api_key = ................................" | cut -d, -f2 | grep "api_key = ................................" | cut -d= -f2)
+sed -i "/\[Nzb\]/,/^$/ s/sabnzbd_apikey =.*/sabnzbd_apikey =$sabAPI/" /nzbtomedia/autoProcessMedia.cfg
+# Add the sabnzbd download directory
+sed -i '/\[Nzb\]/,/^$/ s/default_downloadDirectory =.*/default_downloadDirectory = \/downloads\/Downloads/' /nzbtomedia/autoProcessMedia.cfg

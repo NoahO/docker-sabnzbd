@@ -25,10 +25,10 @@ if ! [ -f /config/sabnzbd.ini ]; then
 	/etc/services.d/sabnzbd/run &
 	#Finish first run wizard
 	sleep 5
-	curl -d "host=default&username=default&password=default&ssl=1&port=563&connections=8&ssl_verify=2" -X POST http://172.18.0.1:8082/sabnzbd/wizard/two
+	curl -d "host=default&username=default&password=default&ssl=1&port=563&connections=8&ssl_verify=2" -X POST http://localhost:8082/sabnzbd/wizard/two
 	#Shutdown SAB
 	sabAPI=$(cat /config/sabnzbd.ini | grep -m1 "api_key = ................................" | cut -d, -f2 | grep "api_key = ................................" | cut -d ' ' -f3)
-	curl -d "mode=shutdown&apikey=$sabAPI" -X POST http://172.18.0.1:8082/sabnzbd/api
+	curl -d "mode=shutdown&apikey=$sabAPI" -X POST http://localhost:8082/sabnzbd/api
 	sleep 5
 fi
 

@@ -9,4 +9,4 @@ COPY 40-sabconfig /etc/cont-init.d
 VOLUME /nzbtomedia
 VOLUME /config/nzbtomedia/admin/future
 
-HEALTHCHECK CMD curl -f http://localhost:8080 || exit 1
+HEALTHCHECK --start-period=600s CMD  curl -f http://localhost:8080 || exit 1

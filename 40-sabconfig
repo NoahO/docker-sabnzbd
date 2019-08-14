@@ -39,6 +39,7 @@ sed -i '/[misc\]/,/^$/ s/safe_postproc = .*/safe_postproc = 0/' /config/sabnzbd.
 sed -i '/[misc\]/,/^$/ s/direct_unpack = .*/direct_unpack = 1/' /config/sabnzbd.ini
 sed -i '/[misc\]/,/^$/ s/script_can_fail = .*/script_can_fail = 1/' /config/sabnzbd.ini
 sed -i '/[misc\]/,/^$/ s/pause_on_pwrar = .*/pause_on_pwrar = 2/' /config/sabnzbd.ini
+sed -i '/[misc\]/,/^$/ s/direct_unpack_threads = .*/direct_unpack_threads = 1/' /config/sabnzbd.ini
 
 #Set directories
 sed -i '/[misc\]/,/^$/ s/complete_dir = .*/complete_dir = \/downloads\/Downloads/' /config/sabnzbd.ini
@@ -59,12 +60,12 @@ while [ ! -f /nzbtomedia/autoProcessMedia.cfg ]; do
 	echo "Waiting for nzbtomedia volume to be ready"
 done
 
-while  ! $(curl -f http://sickchill:8081/sickchill &> /dev/null || exit 1) ; do
+while ! $(curl -f http://sickchill:8081/sickchill &>/dev/null || exit 1); do
 	sleep 1
 	echo "Waiting for sickchill to be ready, so that I don't postprocess early"
 done
 
-while  ! $(curl -f http://couchpotato:5050 &> /dev/null || exit 1) ; do
+while ! $(curl -f http://couchpotato:5050 &>/dev/null || exit 1); do
 	sleep 1
 	echo "Waiting for couchpotato to be ready, so that I don't postprocess early"
 done

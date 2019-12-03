@@ -6,7 +6,8 @@ mkdir -p \
 	/incomplete-nzbs \
 	/downloads/Downloads \
 	/downloads/Downloads/tv \
-	/downloads/Downloads/movie
+	/downloads/Downloads/movie \
+	/downloads/Downloads/music
 
 # permissions (recursive)
 chown -R abc:abc \
@@ -17,7 +18,8 @@ chown -R abc:abc \
 chown abc:abc \
 	/downloads/Downloads \
 	/downloads/Downloads/tv \
-	/downloads/Downloads/movie
+	/downloads/Downloads/movie \
+	/downloads/Downloads/music
 
 # If config doesn't exist yet, start sabnzbd for 10 seconds to build config, then stop.
 if ! [ -f /config/sabnzbd.ini ]; then
@@ -54,6 +56,12 @@ sed -i 's/\[\[movies\]\]/\[\[movie\]\]/' /config/sabnzbd.ini
 php /phpsed.php "/\[categories\].*?\[\[movie\]\].*?dir =\K.*?$/sm" " movie" /config/sabnzbd.ini
 php /phpsed.php "/\[categories\].*?\[\[movie\]\].*?script =\K.*?$/sm" " nzbToCouchPotato.py" /config/sabnzbd.ini
 php /phpsed.php "/\[categories\].*?\[\[movie\]\].*?name =\K.*?$/sm" " movie" /config/sabnzbd.ini
+
+#Rename audio to music to fit with nzbtomedia
+sed -i 's/\[\[audio\]\]/\[\[music\]\]/' /config/sabnzbd.ini
+php /phpsed.php "/\[categories\].*?\[\[music\]\].*?dir =\K.*?$/sm" " music" /config/sabnzbd.ini
+#php /phpsed.php "/\[categories\].*?\[\[music\]\].*?script =\K.*?$/sm" " nzbToLidarr.py" /config/sabnzbd.ini
+php /phpsed.php "/\[categories\].*?\[\[music\]\].*?name =\K.*?$/sm" " music" /config/sabnzbd.ini
 
 while [ ! -f /nzbtomedia/autoProcessMedia.cfg ]; do
 	sleep 1
